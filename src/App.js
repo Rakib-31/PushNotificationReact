@@ -1,22 +1,31 @@
 import logo from './logo.svg';
 import './App.css';
-import {useState} from 'react';
-import {Button, Row, Col, Toast} from 'react-bootstrap';
+import {useEffect, useState} from 'react';
+import { fetchToken, onMessageListener } from './firebase';
+import {Button, Toast} from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import {getFcmToken, onMessageListener} from './firebase';
 
 function App() {
 
   const [show, setShow] = useState(false);
   const [notification, setNotification] = useState({title: '', body: ''});
   const [isTokenFound, setTokenFound] = useState(false);
-  getFcmToken(setTokenFound);
+  
+  useEffect(()=>{
+    fetchToken(setTokenFound);
 
-  onMessageListener().then(payload => {
+    onMessageListener().then(payload => {
+      setNotification({title: payload.notification.title, body: payload.notification.body})
+      setShow(true);
+      console.log(payload);
+    }).catch(err => console.log('failed: ', err));
+    
+  },[])
+
+  const onShowNotificationClicked = () => {
+    setNotification({title: "Notification", body: "This is a test notification"})
     setShow(true);
-    setNotification({title: payload.notification.title, body: payload.notification.body})
-    console.log(payload);
-  }).catch(err => console.log('failed: ', err));
+  }
 
   return (
     <div className="App">
@@ -27,20 +36,25 @@ function App() {
           minWidth: 200
         }}>
           <Toast.Header>
+            <img
+              src="holder.js/20x20?text=%20"
+              className="rounded mr-2"
+              alt=""
+            />
             <strong className="mr-auto">{notification.title}</strong>
             <small>just now</small>
           </Toast.Header>
           <Toast.Body>{notification.body}</Toast.Body>
         </Toast>
       <header className="App-header">
-        {isTokenFound && <h1> Notification permission enabled 👍🏻 </h1>}
-        {!isTokenFound && <h1> Need notification permission ❗️ </h1>}
+        {isTokenFound && <h1> Notification permission enabled </h1>}
+        {!isTokenFound && <h1> Need notification permission </h1>}
         <img src={logo} className="App-logo" alt="logo" />
-        <Button onClick={() => setShow(true)}>Show Toast</Button>
+        <Button onClick={() => onShowNotificationClicked()}>Show Toast</Button>
       </header>
-
-
+      
     </div>
   );
 }
+
 export default App;
